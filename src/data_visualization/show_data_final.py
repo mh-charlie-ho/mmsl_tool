@@ -4,27 +4,10 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import threading
 
-from typing import List
 
-fig, ax = plt.subplots()
-x_data = np.linspace(0, 2 * np.pi, 100)
-line, = ax.plot(x_data, np.sin(x_data))
+class DataPoint(object):
 
-
-def update(frame):
-    y_data = np.sin(x_data + frame * 0.1)
-    line.set_ydata(y_data)
-    return line,
-
-
-animation = FuncAnimation(fig, update, frames=range(100), interval=50)
-
-plt.show()
-
-
-class DataPoint:
-
-    def __init__(self) -> None:
+    def __init__(self):
         self.mX = 0
         self.mY = 0
         self.mRowId = 0
@@ -33,102 +16,96 @@ class DataPoint:
 
 class DataPoints(DataPoint):
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self):
+        super(DataPoints,self).__init__()
         self.mXs = []
         self.mYs = []
         self.mRowIds = []
         self.mTypes = []
 
 
-
 class AnimationAxesData:
-    def __init__(self, ax, msgData, pointColor, pointsymbol) -> None:
+    
+    def __init__(self, ax, msgData, pointColor, rowEndNum=None):
         self.ax = ax
         self.msgData = msgData
 
         self.mDataPoints = DataPoints()
         self.__scatterObj = self.ax.scatter([], [], c=str(pointColor))
 
-    def GetData(self, index):
-        self.mDataPoints.mRowId = self.msgData.rowId[index]
+        self.__SetDataFrame(rowEndNum)
+
+        self.mX = []
+        self.mY = []
+
+        self.mLocker = threading.Lock()
+
+    def GetRawData(self, index):
+        self.mDataPoints.mRowId = self.msgData.rowid[index]
         self.mDataPoints.mX = self.msgData.range[index]
         self.mDataPoints.mY = self.msgData.height[index]
         self.mDataPoints.mType = self.msgData.type[index]
         return self.mDataPoints
 
-    def GetAxesObj(self, xValues:List[float]=[0.0], yValues:List[float]=[0.0]):
-        self.__scatterObj.set_offsets(np.column_stack((xValues, yValues)))
-        return self.__scatterObj
-
-    def __SetDataFrame(self):
+    def __SetDataFrame(self, rowEndNum=None):
         dataFrame = pd.DataFrame({
-            'rowid': self.msgData.rowId,
+            'rowid': self.msgData.rowid,
             'x': self.msgData.range,
             'y': self.msgData.height,
             'type': self.msgData.type
         })
 
-        self.mDataFrame = dataFrame.sort_values(['rowid'],ascending=True)
+        existingRowid = dataFrame['rowid'].values
 
+        if rowEndNum is None:
+            rowEndNum = max(existingRowid)
 
+        missingRows = set(range(rowEndNum)) - set(existingRowid)
 
+        subDataFrame = pd.DataFrame({
+            'rowid': list(missingRows),
+            'x': 0, 
+            'y': 0, 
+            'type': 0
+        })
 
-    def UpdateAxes(self, index, *, method='scatter'):
-        if method not in self.__GetSupportMethod():
-            print("No support ths method!")
-            return
-        
-        dataPoints = self.GetData(index)
-        
-        
+        newDataFrame = pd.concat([dataFrame, subDataFrame], ignore_index=True)
+        self.__mDataFrame = newDataFrame.sort_values(
+            ['rowid', 'x'], ascending=True).reset_index(drop=True)
 
+    def GetDataFrame(self):
+        return self.__mDataFrame
+    
+    def GetRowData(self, rosId=0, number=1):
+        subDataFrame = (
+            self.__mDataFrame[self.__mDataFrame['rowid']==rosId])[0:number]
+        dataPoints = [
+            subDataFrame['rowid'].values,
+            subDataFrame['x'].values,
+            subDataFrame['y'].values,
+            subDataFrame['type'].values]
+        return dataPoints
 
-
-
-
-class Animation:
-
-    def __init__(self, dataList: List, plotColor: List) -> None:
-        fig, self.ax = plt.subplots()
-
-        if ~(len(dataList) == len(plotColor)):
-            print('check the argument quantity')
-            return
-
-        self.mDataList = dataList
-        self.mColor = plotColor
-
-        self.mContainer = []
-        self.mScatter = []
-
-        self.mLocker = threading.Lock()
-
-        self.__SetDataContainer()
-        self.__SetScatter()
-
-    def __SetDataContainer(self) -> None:
-        for i in self.mDataList:
-            self.mContainer.append(DataPoints())
-
-    def __SetScatter(self):
-        for i in self.mColor:
-            self.mScatter = [].append(self.ax.scatter([], [], c=str(i)))
-
-    def UpdateData(self, frame):
+    def UpdateData(self, rowid, number=1):
         with self.mLocker:
-            for id, datalist in enumerate(self.mDataList):
-                data = self.mContainer[id]
-                # Here should be match the ros msg type
-                data.mRowIds.append(datalist.RowId[frame])
-                data.mXs.append(datalist.range[frame])
-                data.mYs.append(datalist.height[frame])
-                data.mTypes.append(datalist.type[frame])
+            dataPoints = self.GetRowData(rowid, number)
+            self.mX.extend(dataPoints[1])
+            self.mY.extend(dataPoints[2])
 
-    def UpdatePlot(self):
+            self.__scatterObj.set_offsets(np.column_stack((self.mX, self.mY)))
+        
+    def GetAxesObj(self):
+        with self.mLocker:
+            return self.__scatterObj
 
+    def ClearData(self):
+        with self.mLocker:
+            self.mX.clear()
+            self.mY.clear()
 
-    scatter.set_offsets(np.column_stack(()))
+    def Show(self, fig=None, frames=100, threading=None):
+        if fig is None:
+            fig, ax = plt.subplots()
 
-    x_data = np.linspace(0, 2 * np.pi, 100)
-    line, = ax.plot(x_data, np.sin(x_data))
+        FuncAnimation(fig, self.UpdateData, frames=range(frames), interval=100)
+        plt.show()
