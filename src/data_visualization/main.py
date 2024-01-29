@@ -2,7 +2,7 @@ import rosnode
 
 
 if __name__ == '__main__':
-    topicName = []
+    topicName = ["col_pts"]
     typeName = []
 
     node = rosnode.RosNode("node_name")

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
-from typing import List
+
+from itri_msgs.msg import GroundFilterColData 
 
 
 def print_():
@@ -9,10 +10,10 @@ def print_():
 
 class RosNode:
 
-    def __init__(self, nodeName) -> None:
+    def __init__(self, nodeName):
         rospy.init_node(str(nodeName), anonymous=True)
 
-    def Receiver(self, topicName: List[str], msgType: List[str]) -> List:
+    def Receiver(self, topicName, msgType):
         if ~(len(topicName) == len(msgType)):
             print("check the argument quantity")
             return
@@ -27,4 +28,5 @@ class RosNode:
 
 
 if __name__ == '__main__':
-    pass
+    GroundFilterColData.rowid = 0.0
+    print(GroundFilterColData.rowid)
