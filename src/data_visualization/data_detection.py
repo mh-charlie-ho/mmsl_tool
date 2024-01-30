@@ -14,7 +14,7 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
-def AnalyzedData(xs, ys, colNum, rowLimit=None):
+def AnalyzedData(xs, ys, rowLimit=None):
     '''
     xs = [0,1,2,0,8]
     ys = [0,1,2,0,7]
@@ -52,23 +52,18 @@ def Work(topicName, typeName, nodeName="node_name"):
 
     msgData = node.Receiver(topicName, typeName)[0]
 
-    # organize msg
-    dataList = []
+    colStates = []
     for i, colData in enumerate(msgData.coldata):
-        dataList.append({
+        obj = ManageMsg({
             "rowid": list(colData.rowid),
             "range": list(colData.range),
             "height": list(colData.height),
             "type": list(colData.type),
             "intensity": list(colData.intensity)
         })
-    
-    colStates = []
-    for colId in range(len(dataList)):
-        obj = ManageMsg(dataList[colId])
         xList = obj.GetCol(obj.GetRowData(), 'x').values
         yList = obj.GetCol(obj.GetRowData(), 'y').values
-        colStates.append(AnalyzedData(xList, yList, colId, rowLimit=20))
+        colStates.append(AnalyzedData(xList, yList, rowLimit=20))
     
     print(np.where(colStates==True)[0])
 
