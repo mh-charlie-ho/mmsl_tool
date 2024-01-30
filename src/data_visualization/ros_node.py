@@ -1,11 +1,13 @@
 #!/usr/bin/env python
+
 import rospy
 from itri_msgs.msg import GroundFilterColData 
+
 
 class RosNode:
 
     def __init__(self, nodeName):
-        rospy.init_node(str(nodeName), anonymous=True)
+        rospy.init_node(str(nodeName), anonymous=False)
 
     def Receiver(self, topicName, msgType):
         if not (len(topicName) == len(msgType)):
@@ -22,4 +24,8 @@ class RosNode:
 
 if __name__ == '__main__':
     rosNode = RosNode("ComeHere")
-    rosNode.Receiver(["/iv_points"], [GroundFilterColData])
+    data = rosNode.Receiver(["/col_pts", "/col_floating_obs_pts"], 
+                            [GroundFilterColData, GroundFilterColData])
+    print(data) # list
+    print(data[0])
+    print(type(data[0]))
