@@ -3,6 +3,8 @@
 import ros_node
 from organize_msg import ManageMsg
 
+from itri_msgs.msg import GroundFilterColDataList
+
 import sys
 import signal
 import math
@@ -67,3 +69,10 @@ def Work(topicName, typeName, nodeName="node_name"):
     
     print(np.where(colStates==True)[0])
 
+
+if __name__ == '__main__':
+    # For Test =================================================================
+    topicName = ["/all_points",]
+    typeName = [GroundFilterColDataList]
+    # ==========================================================================
+    print(Work(topicName, typeName))

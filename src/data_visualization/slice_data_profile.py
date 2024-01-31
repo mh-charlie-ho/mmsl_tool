@@ -4,6 +4,8 @@ import ros_node
 import general_test_data
 from organize_msg import ManageMsg
 
+from itri_msgs.msg import GroundFilterColData
+
 import sys
 import signal
 import threading
@@ -59,7 +61,7 @@ def PrintDict(dict):
     for i in dict:
         print(i, dict[i])
 
-def Work(topicName, typeName, nodeName="node_name"):
+def Work(topicName, typeName, color, nodeName="node_name"):
     global axesNum, scatter, structMsgData, dataCon
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -104,7 +106,6 @@ def Work(topicName, typeName, nodeName="node_name"):
     structMsgData = []
     dataCon = []
     scatter = []
-    color = ['b','g','r']
     for i in range(axesNum):
         structMsgData.append(ManageMsg(dataList[i]))
         dataCon.append(UpdateContainer())
@@ -119,6 +120,11 @@ def Work(topicName, typeName, nodeName="node_name"):
     
 
 if __name__ == '__main__':
-    Work()
+    # For Test =================================================================
+    topicName = ["/col_pts", "/col_floating_obs_pts"]
+    typeName = [GroundFilterColData, GroundFilterColData]
+    color = ['b','g']
+    # ==========================================================================
+    Work(topicName, typeName, color)
 
     
