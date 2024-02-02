@@ -3,6 +3,7 @@
 
 class DataPoint(object):
 
+
     def __init__(self, x=0, y=0, rowid=0, type=0):
         self.mX = x
         self.mY = y
