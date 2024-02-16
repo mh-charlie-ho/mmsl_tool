@@ -25,9 +25,13 @@ class ManageMsg(DataPoints):
         })
 
         existingRowid = dataFrame['rowid'].values
+        # print("how many?: ", len(existingRowid))
 
         if rowEndId is None:
-            rowEndId = max(existingRowid)
+            if len(existingRowid)==0:
+                rowEndId = 0
+            else:
+                rowEndId = max(existingRowid)
 
         missingRows = set(range(rowEndId)) - set(existingRowid)
 
@@ -44,7 +48,7 @@ class ManageMsg(DataPoints):
     
     def GetRowData(self, rowId=None, index=None):
 
-        if rowId is None:
+        if rowId is None or len(self.__mOrderFrame)==0:
             return self.__mOrderFrame
         
         if rowId not in self.__mOrderFrame['rowid'].values:
@@ -58,6 +62,8 @@ class ManageMsg(DataPoints):
         
         index = index \
             if index <= len(dataFrame) else len(dataFrame)-1
+        if index == -1:
+            index = len(dataFrame)-1
         
         return dataFrame.loc[index]
     
@@ -66,21 +72,27 @@ class ManageMsg(DataPoints):
         TBD
         Check the col name is existing. 
         '''
-        return formatData[str(colnumName)]
-
+        return formatData[str(colnumName)].tolist()
 
 if __name__ == '__main__':
+    # testDict = {
+    #     "rowid":  [0, 0, 0, 0, 0, 0, 0, 0],
+    #     "type":   [  0,   0,   0,   0,   0,   0,   0,   0],
+    #     "range":  [ 0.000000, 1.766293, 2.445991, 3.195587, 3.602719, 3.911899,
+    #                 4.134902, 4.402998],
+    #     "height": [ 0.000000, 26.402569, 86.429100, 26.110262, 26.780521,
+    #                27.411665, 35.315552, 27.092993]
+    # }
+
     testDict = {
-        "rowid":  [0, 0, 0, 0, 0, 0, 0, 0],
-        "type":   [  0,   0,   0,   0,   0,   0,   0,   0],
-        "range":  [ 0.000000, 1.766293, 2.445991, 3.195587, 3.602719, 3.911899,
-                    4.134902, 4.402998],
-        "height": [ 0.000000, 26.402569, 86.429100, 26.110262, 26.780521,
-                   27.411665, 35.315552, 27.092993]
+        "rowid": [],
+        "type" : [],
+        "range"    : [],
+        "height"    : []
     }
 
     testObj = ManageMsg(testDict)
-    print(testObj.GetRowData())
+    print(testObj.GetCol(testObj.GetRowData(), "x"))
     print(" ")
     # print(testObj.GetRowData(rowId=2))
     # pandas = testObj.GetRowData(rowId=2)
@@ -103,22 +115,8 @@ if __name__ == '__main__':
     # 7    0.0     0  4.402998  27.092993
 
     table = pd.DataFrame({
-        "rowid": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "type":  [  0,   0,   0,   0,   0,   0,   0,   0],
-        "x":[0.000000,
-                1.766293,
-                2.445991,
-                3.195587,
-                3.602719,
-                3.911899,
-                4.134902,
-                4.402998],
-        "y": [ 0.000000,
-                26.402569,
-                86.429100,
-                26.110262,
-                26.780521,
-                27.411665,
-                35.315552,
-                27.092993]
+        "rowid": [],
+        "type" : [],
+        "x"    : [],
+        "y"    : []
     })

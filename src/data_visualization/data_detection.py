@@ -30,14 +30,14 @@ def AnalyzedData(xs, ys, rowLimit=None):
 
     flag = 0
     for i in range(l):
-        if xs[i]==0 or ys[i]==0:
+        if xs[i] == 0 or ys[i] == 0:
             continue
-        
-        if flag==1:
+
+        if flag == 1:
             diffX = xs[i] - oldX
             diffY = ys[i] - oldY
 
-            if math.atan(diffY/diffX) > math.pi/3:
+            if math.atan(diffY / diffX) > math.pi / 3:
                 return True
 
         oldX = xs[i]
@@ -63,16 +63,18 @@ def Work(topicName, typeName, nodeName="node_name"):
             "type": list(colData.type),
             "intensity": list(colData.intensity)
         })
-        xList = obj.GetCol(obj.GetRowData(), 'x').values
-        yList = obj.GetCol(obj.GetRowData(), 'y').values
+        xList = obj.GetCol(obj.GetRowData(), 'x')
+        yList = obj.GetCol(obj.GetRowData(), 'y')
         colStates.append(AnalyzedData(xList, yList, rowLimit=20))
-    
-    print(np.where(colStates==True)[0])
+
+    print(np.where(colStates == True)[0])
 
 
 if __name__ == '__main__':
     # For Test =================================================================
-    topicName = ["/all_points",]
+    topicName = [
+        "/all_points",
+    ]
     typeName = [GroundFilterColDataList]
     # ==========================================================================
     print(Work(topicName, typeName))

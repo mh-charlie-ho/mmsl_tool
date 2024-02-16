@@ -22,9 +22,17 @@ class UpdateContainer():
 
         self.mLocker = threading.Lock()
     def append(self, x, y):
-        with self.mLocker:
-            self.mX.append(x)
-            self.mY.append(y)
+        if not (type(x) == type(y)):
+            raise "Appending different type data"
+        
+        if type(x) is list:
+            with self.mLocker:
+                self.mX.extend(x)
+                self.mY.extend(y)
+        else:
+            with self.mLocker:
+                self.mX.append(x)
+                self.mY.append(y)
 
     def clear(self):
         with self.mLocker:
@@ -40,19 +48,23 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
-def Update(msgObj, dataObj, rowid):
-    x = msgObj.GetCol(msgObj.GetRowData(rowId=rowid, index=0), "x")
-    y = msgObj.GetCol(msgObj.GetRowData(rowId=rowid, index=0), "y")
-    print(x,y)
-    dataObj.append(x, y)
+def Update(msgObj, dataObj, rowid, rowLen):
+    rowid = msgObj.GetCol(msgObj.GetRowData(rowId=rowid, index=-1), "rowid")
+    x = msgObj.GetCol(msgObj.GetRowData(rowId=rowid, index=-1), "x")
+    y = msgObj.GetCol(msgObj.GetRowData(rowId=rowid, index=-1), "y")
+    print(rowid, x, y)
+    # print(msgObj.GetRowData())
+    # print("=====")
+    if len(dataObj.mX)<=rowLen:  # stop it in the max row
+        dataObj.append(x, y)
     return (dataObj.mX, dataObj.mY)
 
 
-def PlotUpdate(frame):
+def PlotUpdate(frame, frameNum):
     print("=========================frame: ", frame)
     for i in range(axesNum):
         print("here")
-        x, y = Update(structMsgData[i], dataCon[i], rowid=frame)
+        x, y = Update(structMsgData[i], dataCon[i], rowid=frame, rowLen=frameNum)
         scatter[i].set_offsets(np.column_stack((x, y)))
     
     return scatter,
@@ -69,7 +81,7 @@ def Work(topicName, typeName, color, nodeName="node_name"):
 
     dataList = node.Receiver(topicName, typeName)
     axesNum = len(dataList)
-
+    print("Received")
     # organize msg
     for i in range(axesNum):
         data = dataList[i]
@@ -98,8 +110,8 @@ def Work(topicName, typeName, color, nodeName="node_name"):
     fig, ax = plt.subplots()
     ax.set_xlabel('X-axis')
     ax.set_ylabel('Y-axis')
-    ax.set_xlim(left=-20, right=120)
-    ax.set_ylim(bottom=-20, top=120)
+    ax.set_xlim(left=-5, right=100)
+    ax.set_ylim(bottom=-5, top=30)
     ax.set_title("TEST")
     ax.grid(True, linestyle='--', linewidth=0.5)
 
@@ -111,19 +123,37 @@ def Work(topicName, typeName, color, nodeName="node_name"):
         dataCon.append(UpdateContainer())
         scatter.append(ax.scatter([], [], c=color[i]))
     
+    # sys.exit()
     
     if len(structMsgData)==0 or len(structMsgData)==0:
         sys.exit()
 
-    animation = FuncAnimation(fig, PlotUpdate, frames=range(100), interval=1000)
+    frameNum = 300
+    animation = FuncAnimation(
+        fig, PlotUpdate, frames=range(frameNum), fargs=(frameNum,), interval=80)
     plt.show()  
     
 
 if __name__ == '__main__':
     # For Test =================================================================
-    topicName = ["/col_pts", "/col_floating_obs_pts"]
-    typeName = [GroundFilterColData, GroundFilterColData]
-    color = ['b','g']
+    topicName = [
+                 "/col_ground_pts", 
+                #  "/col_nonground_pts",
+                 "/col_ground_obs_pts", 
+                 "/col_floating_obs_pts"
+                ]
+    typeName = [
+                GroundFilterColData,
+                # GroundFilterColData, 
+                GroundFilterColData, 
+                GroundFilterColData
+               ]
+    color = [
+             'y',
+            #  'r',
+             'r',
+             'g'
+            ]
     # ==========================================================================
     Work(topicName, typeName, color)
 
