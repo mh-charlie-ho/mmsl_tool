@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import signal, sys
 import ros_node
 
